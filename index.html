@@ -1,0 +1,478 @@
+DSA Visualizer Dashboard (Single HTML File)
+
+Features:
+
+* Stack (Push/Pop)
+* Queue (Enqueue/Dequeue)
+* Bubble Sort Visualization
+* Binary Search
+* Dynamic Array Simulation
+
+Save as `index.html` and open in a browser.
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DSA Visualizer Dashboard</title>
+
+<style>
+body{
+    font-family:Arial, sans-serif;
+    background:#f4f6f9;
+    margin:20px;
+}
+
+.container{
+    max-width:1200px;
+    margin:auto;
+}
+
+h1{
+    text-align:center;
+    color:#2c3e50;
+}
+
+.section{
+    background:white;
+    padding:20px;
+    margin:20px 0;
+    border-radius:10px;
+    box-shadow:0 2px 8px rgba(0,0,0,.1);
+}
+
+button{
+    padding:8px 15px;
+    border:none;
+    border-radius:5px;
+    background:#3498db;
+    color:white;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#2980b9;
+}
+
+input{
+    padding:8px;
+    margin:5px;
+}
+
+.box{
+    display:inline-block;
+    min-width:60px;
+    padding:10px;
+    margin:5px;
+    background:#27ae60;
+    color:white;
+    text-align:center;
+    border-radius:5px;
+}
+
+.queue-box{
+    background:#8e44ad;
+}
+
+.bar-container{
+    height:300px;
+    display:flex;
+    align-items:flex-end;
+    gap:5px;
+}
+
+.bar{
+    width:40px;
+    background:#3498db;
+    color:white;
+    text-align:center;
+}
+
+.log{
+    background:#222;
+    color:#00ff00;
+    height:120px;
+    overflow:auto;
+    padding:10px;
+    font-family:monospace;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>DSA Visualizer Dashboard</h1>
+
+<!-- STACK -->
+
+<div class="section">
+<h2>Stack (LIFO)</h2>
+
+<input id="stackInput" placeholder="Value">
+<button onclick="pushStack()">Push</button>
+<button onclick="popStack()">Pop</button>
+
+<div id="stackDisplay"></div>
+</div>
+
+<!-- QUEUE -->
+
+<div class="section">
+<h2>Queue (FIFO)</h2>
+
+<input id="queueInput" placeholder="Value">
+<button onclick="enqueue()">Enqueue</button>
+<button onclick="dequeue()">Dequeue</button>
+
+<div id="queueDisplay"></div>
+</div>
+
+<!-- BUBBLE SORT -->
+
+<div class="section">
+<h2>Bubble Sort Visualizer</h2>
+
+<input id="sortInput" value="8,5,2,9,1,7">
+<button onclick="generateBars()">Generate</button>
+<button onclick="bubbleSort()">Sort</button>
+
+<div id="bars" class="bar-container"></div>
+</div>
+
+<!-- BINARY SEARCH -->
+
+<div class="section">
+<h2>Binary Search</h2>
+
+<input id="searchArray" value="1,3,5,7,9,11,13">
+<input id="searchTarget" placeholder="Target">
+
+<button onclick="binarySearchVisual()">
+Search
+</button>
+
+<p id="searchResult"></p>
+</div>
+
+<!-- DYNAMIC ARRAY -->
+
+<div class="section">
+<h2>Dynamic Array</h2>
+
+<input id="dynInput" placeholder="Value">
+
+<button onclick="addDynamic()">
+Add
+</button>
+
+<p id="dynInfo"></p>
+<div id="dynDisplay"></div>
+</div>
+
+<!-- LOG -->
+
+<div class="section">
+<h2>System Log</h2>
+<div id="log" class="log"></div>
+</div>
+
+</div>
+
+<script>
+
+function log(msg){
+    let box=document.getElementById("log");
+    box.innerHTML+="<div>> "+msg+"</div>";
+    box.scrollTop=box.scrollHeight;
+}
+
+/////////////////////////////////////////////////
+// STACK
+/////////////////////////////////////////////////
+
+let stack=[];
+
+function pushStack(){
+
+    let val=document.getElementById("stackInput").value;
+
+    if(!val) return;
+
+    stack.push(val);
+
+    renderStack();
+
+    log("Pushed "+val);
+}
+
+function popStack(){
+
+    if(stack.length===0) return;
+
+    let x=stack.pop();
+
+    renderStack();
+
+    log("Popped "+x);
+}
+
+function renderStack(){
+
+    let d=document.getElementById("stackDisplay");
+
+    d.innerHTML="";
+
+    [...stack].reverse().forEach(v=>{
+
+        d.innerHTML+=
+        `<div class="box">${v}</div><br>`;
+    });
+}
+
+/////////////////////////////////////////////////
+// QUEUE
+/////////////////////////////////////////////////
+
+let queue=[];
+
+function enqueue(){
+
+    let val=document.getElementById("queueInput").value;
+
+    if(!val) return;
+
+    queue.push(val);
+
+    renderQueue();
+
+    log("Enqueued "+val);
+}
+
+function dequeue(){
+
+    if(queue.length===0) return;
+
+    let x=queue.shift();
+
+    renderQueue();
+
+    log("Dequeued "+x);
+}
+
+function renderQueue(){
+
+    let d=document.getElementById("queueDisplay");
+
+    d.innerHTML="";
+
+    queue.forEach(v=>{
+
+        d.innerHTML+=
+        `<div class="box queue-box">${v}</div>`;
+    });
+}
+
+/////////////////////////////////////////////////
+// SORTING
+/////////////////////////////////////////////////
+
+let arr=[];
+
+function generateBars(){
+
+    arr=document
+    .getElementById("sortInput")
+    .value.split(",")
+    .map(Number);
+
+    drawBars();
+}
+
+function drawBars(){
+
+    let bars=document.getElementById("bars");
+
+    bars.innerHTML="";
+
+    arr.forEach(v=>{
+
+        bars.innerHTML+=
+        `<div class="bar"
+        style="height:${v*25}px">
+        ${v}
+        </div>`;
+    });
+}
+
+async function bubbleSort(){
+
+    for(let i=0;i<arr.length-1;i++){
+
+        for(let j=0;j<arr.length-i-1;j++){
+
+            if(arr[j]>arr[j+1]){
+
+                [arr[j],arr[j+1]]
+                =[arr[j+1],arr[j]];
+
+                drawBars();
+
+                await new Promise(r=>
+                    setTimeout(r,400)
+                );
+            }
+        }
+    }
+
+    log("Bubble Sort Completed");
+}
+
+generateBars();
+
+/////////////////////////////////////////////////
+// BINARY SEARCH
+/////////////////////////////////////////////////
+
+function binarySearchVisual(){
+
+    let array=
+    document
+    .getElementById("searchArray")
+    .value.split(",")
+    .map(Number);
+
+    let target=
+    Number(
+        document
+        .getElementById("searchTarget")
+        .value
+    );
+
+    let left=0;
+    let right=array.length-1;
+
+    while(left<=right){
+
+        let mid=
+        Math.floor((left+right)/2);
+
+        if(array[mid]===target){
+
+            document
+            .getElementById("searchResult")
+            .innerText=
+            "Found at index "+mid;
+
+            log(
+                "Binary Search found "+
+                target
+            );
+
+            return;
+        }
+
+        if(array[mid]<target)
+            left=mid+1;
+        else
+            right=mid-1;
+    }
+
+    document
+    .getElementById("searchResult")
+    .innerText=
+    "Not Found";
+
+    log(
+        "Binary Search failed for "+
+        target
+    );
+}
+
+/////////////////////////////////////////////////
+// DYNAMIC ARRAY
+/////////////////////////////////////////////////
+
+class DynamicArray{
+
+    constructor(){
+
+        this.capacity=2;
+
+        this.size=0;
+
+        this.data=
+        new Array(this.capacity);
+    }
+
+    add(val){
+
+        if(this.size===this.capacity){
+
+            this.capacity*=2;
+
+            let temp=
+            new Array(this.capacity);
+
+            for(let i=0;i<this.size;i++)
+                temp[i]=this.data[i];
+
+            this.data=temp;
+
+            log(
+            "Array Resized to "
+            +this.capacity
+            );
+        }
+
+        this.data[this.size++]=val;
+    }
+}
+
+let dynamic=new DynamicArray();
+
+function addDynamic(){
+
+    let val=
+    document
+    .getElementById("dynInput")
+    .value;
+
+    if(!val) return;
+
+    dynamic.add(val);
+
+    renderDynamic();
+}
+
+function renderDynamic(){
+
+    let d=
+    document
+    .getElementById("dynDisplay");
+
+    d.innerHTML="";
+
+    for(let i=0;i<dynamic.size;i++){
+
+        d.innerHTML+=
+        `<div class="box">
+        ${dynamic.data[i]}
+        </div>`;
+    }
+
+    document
+    .getElementById("dynInfo")
+    .innerText=
+    `Size: ${dynamic.size}
+     Capacity: ${dynamic.capacity}`;
+}
+
+</script>
+
+</body>
+</html>
+```

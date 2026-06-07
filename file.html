@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Parking Management System</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; text-align: center; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        .setup-box, .controls { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; background: #ecf0f1; padding: 15px; border-radius: 8px; }
+        input { padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px; }
+        button { padding: 8px 15px; cursor: pointer; border: none; border-radius: 4px; background: #3498db; color: white; font-weight: bold; }
+        button:hover { background: #2980b9; }
+        .floor-container { display: flex; gap: 15px; overflow-x: auto; padding: 10px 0; }
+        .floor { border: 2px solid #2c3e50; min-width: 120px; min-height: 200px; display: flex; flex-direction: column-reverse; background: #dfe6e9; border-radius: 4px; position: relative;}
+        .floor-label { position: absolute; top: -25px; width: 100%; text-align: center; font-weight: bold; }
+        .car-box { background: #e67e22; color: white; margin: 2px; padding: 8px; text-align: center; border-radius: 4px; border: 1px solid #d35400; font-size: 12px; }
+        .list-section { margin-top: 20px; padding: 10px; border-radius: 8px; background: #fff3e0; }
+        .log { margin-top: 15px; height: 100px; overflow-y: auto; background: #333; color: #00ff00; padding: 10px; font-family: monospace; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Multi-Story Parking System</h1>
+
+    <div class="setup-box">
+        <input type="number" id="maxN" placeholder="Cars per floor" value="3">
+        <input type="number" id="initFloors" placeholder="Floors" value="3">
+        <input type="number" id="waitLimit" placeholder="Waitlist Limit" value="5">
+        <button onclick="setupSystem()">Initialize System</button>
+    </div>
+
+    <div class="controls">
+        <input type="text" id="plateInput" placeholder="Enter Plate Number">
+        <button onclick="addCar()">Add Car</button>
+        <button onclick="removeCar()" style="background:#e74c3c">Remove Car</button>
+        <button onclick="expand()">Add 1 Floor</button>
+    </div>
+
+    <h3>Parking Floors (Stacks)</h3>
+    <div id="floorsDisplay" class="floor-container"></div>
+
+    <div class="list-section">
+        <strong>Overflow Waitlist:</strong> <span id="waitlistDisplay">Empty</span>
+    </div>
+
+    <div class="log" id="sysLog">System ready. Initialize to start.</div>
+</div>
+
+
+
+<script>
+    let capacity = 0;
+    let waitLimit = 0;
+    let floors = [];
+    let waitlist = [];
+
+    function log(msg) {
+        const logBox = document.getElementById('sysLog');
+        logBox.innerHTML += `<br>> ${msg}`;
+        logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    function setupSystem() {
+        capacity = parseInt(document.getElementById('maxN').value);
+        waitLimit = parseInt(document.getElementById('waitLimit').value);
+        let numFloors = parseInt(document.getElementById('initFloors').value);
+       
+        floors = Array.from({length: numFloors}, () => []);
+        waitlist = [];
+        log(`System initialized with ${numFloors} floors, capacity ${capacity} each.`);
+        render();
+    }
+
+    function isDuplicate(plate) {
+        if (waitlist.includes(plate)) return true;
+        return floors.some(floor => floor.includes(plate));
+    }
+
+    function addCar() {
+        let plate = document.getElementById('plateInput').value.trim().toUpperCase();
+        if (!plate) return;
+        if (isDuplicate(plate)) {
+            log(`ERROR: ${plate} is already in the system!`);
+            return;
+        }
+
+        let parked = false;
+        for (let i = 0; i < floors.length; i++) {
+            if (floors[i].length < capacity) {
+                floors[i].push(plate);
+                log(`Car ${plate} parked on Floor ${i+1}`);
+                parked = true;
+                break;
+            }
+        }
+
+        if (!parked) {
+            if (waitlist.length < waitLimit) {
+                waitlist.push(plate);
+                log(`Floors full. ${plate} moved to Overflow.`);
+            } else {
+                log(`REJECTED: Building and Waitlist are full!`);
+            }
+        }
+        render();
+    }
+
+    function removeCar() {
+        let plate = document.getElementById('plateInput').value.trim().toUpperCase();
+        let found = false;
+
+        for (let i = 0; i < floors.length; i++) {
+            let index = floors[i].indexOf(plate);
+            if (index !== -1) {
+                // Rule: Last in First Out logic simulated by removing from middle
+                floors[i].splice(index, 1);
+                log(`Car ${plate} exited from Floor ${i+1}`);
+                found = true;
+                break;
+            }
+        }
+
+        if (found) {
+            if (waitlist.length > 0) {
+                let nextCar = waitlist.shift();
+                log(`Space opened! Moving ${nextCar} from waitlist to entry.`);
+                // Re-add using the parking logic
+                document.getElementById('plateInput').value = nextCar;
+                addCar();
+            }
+        } else {
+            log(`Car ${plate} not found.`);
+        }
+        render();
+    }
+
+    function expand() {
+        floors.push([]);
+        log("System expanded by 1 floor.");
+        if (waitlist.length > 0) {
+            let nextCar = waitlist.shift();
+            document.getElementById('plateInput').value = nextCar;
+            addCar();
+        }
+        render();
+    }
+
+    function render() {
+        const display = document.getElementById('floorsDisplay');
+        display.innerHTML = '';
+        floors.forEach((floor, i) => {
+            let floorDiv = document.createElement('div');
+            floorDiv.className = 'floor';
+            floorDiv.innerHTML = `<div class="floor-label">F ${i+1}</div>`;
+            floor.forEach(car => {
+                floorDiv.innerHTML += `<div class="car-box">${car}</div>`;
+            });
+            display.appendChild(floorDiv);
+        });
+
+        document.getElementById('waitlistDisplay').innerText =
+            waitlist.length > 0 ? waitlist.join(', ') : 'Empty';
+    }
+</script>
+</body>
+</html>
